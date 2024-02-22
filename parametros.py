@@ -19,7 +19,7 @@ parametros = {
     },
      
     'geral': {
-        'tamanhos':          [2048],  #Refere-se aos tamanhos de cada pacote durante o recorte. (Para cada tamanho um conj. de dados é gerado).
+        'tamanhos':          [64, 128, 256, 512],  #Refere-se aos tamanhos de cada pacote durante o recorte. (Para cada tamanho um conj. de dados é gerado).
         'limiteResolucao':   512,                  #Refere-se ao valor limite antes que o redimensionamento atue, reduzindo o tamanho para este valor.
         'limiar':            0.1,                  #Refere-se ao percentual mínimo de pixels que uma fatia deve aparesentar para ser considerado al, vo.
         'probabilidade':     1.0,                  #Refere-se a probabilidade de realizar o aumento dos dados para cada uma das rotações e espelhamentos.
