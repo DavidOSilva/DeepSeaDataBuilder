@@ -1,12 +1,12 @@
 <p align="center">
-  <img src="assets/logo.png" alt="DeepSeaDataBuilder Logo" width="200" height="200">
+  <img src="assets/logo.png" alt="DeepSeaDataBuilder Logo" width="200">
 </p>
 
 ---
 
 # DeepSeaDataBuilder 🌊🛠️
 
-Bem-vindo ao DeepSeaDataBuilder! 🎉 Este é um poderoso algoritmo construtor de conjunto de dados projetado especificamente para a área de oceanografia por satélite. 🛰️🌊 Ele simplifica o processo de preparação de dados para treinamento de redes neurais, garantindo conjuntos de dados balanceados e estruturados para análise precisa dos dados oceânicos.
+Bem-vindo ao DeepSeaDataBuilder! 🎉 Este é um poderoso algoritmo construtor de conjunto de dados projetado especificamente pelo laboratorio de oceanografia por satélite da Universidade Federal da Bahia, em 2024. 🛰️🌊 Ele simplifica o processo de preparação de dados para treinamento de redes neurais, garantindo conjuntos de dados balanceados e estruturados para análise precisa dos dados oceânicos.
 
 ---
 
@@ -29,7 +29,7 @@ O DeepSeaDataBuilder é uma ferramenta essencial para pesquisadores e cientistas
 ## Como Usar
 
 1. **Configuração dos Parâmetros:** Personalize os parâmetros no arquivo `parametros.py` para atender às suas necessidades específicas.
-2. **Execução do Código:** Execute o script principal `main.py` para iniciar o processamento dos dados.
+2. **Execução do Código:** Execute o script principal `deepSeaDataBuilder.py` para iniciar o processamento dos dados.
 3. **Análise dos Resultados:** Analise os conjuntos de dados processados e utilize-os para treinar suas redes neurais.
 
 ---
