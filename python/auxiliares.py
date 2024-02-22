@@ -409,7 +409,7 @@ def retirarSolo(netcdf, modo):
     elif modo == 'glmWithNE': sigmaSemSolo = retirarSoloGLMNaturalEarth(netcdf)
     elif modo == 'snap': sigmaSemSolo = executarGrafoSobreNetcdf(netcdf, join(parametros['diretorios']['grafos'], "LandToNan.xml"))
     else:
-        printColorido('MODO DE RETIRADA DE SOLO INVÁLIDO')
+        printColorido('MODO DE RETIRADA DE SOLO INVÁLIDO', 'r')
         return None
     return  sigmaSemSolo
 
