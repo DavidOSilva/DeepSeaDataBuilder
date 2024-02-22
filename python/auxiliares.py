@@ -224,20 +224,6 @@ def filtrar(dado, rotulo, classe, limiar=parametros['geral']['limiar'], detalhar
     if detalhar: printColorido(f'{classe.upper()}: {len(dadoFiltrado)}   ', 'b', '')
     return (dadoFiltrado, rotuloFiltrado), (dadoRestante, rotuloRestante) #filtrados, restantes = ([array, ...],[array, ...]), ([array, ...],[array, ...])
 
-# def aumentoDeDados(dados, rotulos, incluirBase=False):
-#     dadosAumento, rotulosAumento = [], []
-#     conjuntoTreinamento, conjuntoAumentado = [dados, rotulos], [dadosAumento, rotulosAumento]
-#     for tipo in range(len(conjuntoTreinamento)):
-#         for i in range(len(dados)):
-#             base = conjuntoTreinamento[tipo][i]
-#             if incluirBase: conjuntoAumentado[tipo].append(base) # Adicionando o array original na lista.
-#             conjuntoAumentado[tipo].append(np.rot90(base, k=1))  # Rotação de 90°
-#             conjuntoAumentado[tipo].append(np.rot90(base, k=2))  # Rotação de 180°
-#             conjuntoAumentado[tipo].append(np.rot90(base, k=3))  # Rotação de 270°
-#             conjuntoAumentado[tipo].append(np.flip(base, 1))     # Espelhamento horizontal
-#             conjuntoAumentado[tipo].append(np.flip(base, 0))     # Espelhamento Vertical
-#     return dadosAumento, rotulosAumento
-
 def aumentoDeDados(dados, rotulos, probabilidade=1, incluirBase=False):
     dadosAumento, rotulosAumento = [], []
     conjuntoTreinamento, conjuntoAumentado = [dados, rotulos], [dadosAumento, rotulosAumento]
@@ -259,6 +245,14 @@ def aumentoDeDados(dados, rotulos, probabilidade=1, incluirBase=False):
         if np.random.rand() < probabilidade:
             conjuntoAumentado[0].append(np.flip(dadoBase, 0))
             conjuntoAumentado[1].append(np.flip(rotuloBase, 0))
+        if np.random.rand() < probabilidade:
+            dadoBaseRotacionado90Graus, rotuloBaseRotacionado90Graus = np.rot90(dadoBase, k=1), np.rot90(rotuloBase, k=1)
+            conjuntoAumentado[0].append(np.flip(dadoBaseRotacionado90Graus, 1))
+            conjuntoAumentado[1].append(np.flip(rotuloBaseRotacionado90Graus, 1))
+        if np.random.rand() < probabilidade:
+            dadoBaseRotacionado90Graus, rotuloBaseRotacionado90Graus = np.rot90(dadoBase, k=1), np.rot90(rotuloBase, k=1)
+            conjuntoAumentado[0].append(np.flip(dadoBaseRotacionado90Graus, 0))
+            conjuntoAumentado[1].append(np.flip(rotuloBaseRotacionado90Graus, 0))
     return dadosAumento, rotulosAumento
 
 def carregarNpzDadoERotulo(npz, dadoIndice='arr_0', rotuloIndice='arr_1'):
