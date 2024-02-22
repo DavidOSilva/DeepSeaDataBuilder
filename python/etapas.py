@@ -101,7 +101,8 @@ def criarConjuntoDeDados(hdf5Filtrados, tamanho, dirDataset=parametros['diretori
     classes, qntFatias = obterClassesParametros(), obterQntFatiasFiltradasHDF5(hdf5Filtrados, seraoIgnorados=['land', 'null'])
     datasetPasta = criarPasta(join(dirDataset, f'{tamanho}'))
     tamanhoLote = aproximarLote(tamanho)
-    if parametros['geral']['redimensionar']: datasetHDF5 = criarHDF5Vazio(join(datasetPasta, f'[EM ANDAMENTO...][{tamanho}].h5'), parametros['geral']['limiteResolucao']) 
+    if parametros['geral']['redimensionar'] and tamanho > parametros['geral']['limiteResolucao']:
+        datasetHDF5 = criarHDF5Vazio(join(datasetPasta, f'[EM ANDAMENTO...][{tamanho}].h5'), parametros['geral']['limiteResolucao']) 
     else: datasetHDF5 = criarHDF5Vazio(join(datasetPasta, f'[EM ANDAMENTO...][{tamanho}].h5'), tamanho)
     totalAdicionado, qntFatiasIncluidas = 0, []
     for classeIndex, classe in enumerate(classes):
