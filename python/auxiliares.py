@@ -40,7 +40,7 @@ def gerarNomePastaDestino(proporcoes, tamanho, classes=obterClassesParametros(),
         if p!= 0: prefixo += f'{c.upper()}={p}' + separador
     if foiAumentado:
         for classe in classesAumentadas: sufixo = sufixo + f'[{classe}++]'
-    if foiRedimensionado: sufixo = sufixo + f'[REDIMENSIONADO]'
+    if foiRedimensionado and tamanho>parametros['geral']['limiteResolucao']: sufixo = sufixo + f'[REDIMENSIONADO]'
     return prefixo[:-len(separador)] + sufixo
 
 def inverterNan(matriz, matrizNan): 
