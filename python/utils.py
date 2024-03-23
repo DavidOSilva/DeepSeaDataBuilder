@@ -94,12 +94,6 @@ def ocorrenciasAtendeLimiar(matriz, buscado, limiar=parametros['geral']['limiar'
     ocorrenciaPercentual = np.count_nonzero(matriz.flatten() == buscado)/(matriz.flatten().shape[0]) #Percentual de ocorrencias de buscado em toda matriz.
     return ocorrenciaPercentual > limiar
 
-# def carregarNpzDadoERotulo(npz, dadoIndice='arr_0', rotuloIndice='arr_1'):
-#     with np.load(npz) as npzFile:
-#         dado = npzFile[dadoIndice]
-#         rotulo = npzFile[rotuloIndice]
-#     return dado, rotulo
-
 def aproximarLote(x, coef = [44355277.53563044, -2.0001758205102522]): return int(round(coef[0] * (x ** coef[1]), 0))
 
 def obterQuantidadeDeLotes(comprimento, tamanhoLote):
@@ -123,14 +117,6 @@ def retirarSolo(netcdf, modo):
         printColorido('MODO DE RETIRADA DE SOLO INVÁLIDO', 'r')
         return None
     return  sigmaSemSolo
-
-# def redimensionar(dado, fator=2):
-#     novas_linhas, novas_colunas = dado.shape[0] // fator, dado.shape[1] // fator
-#     dado_reduzido = np.zeros((novas_linhas, novas_colunas))
-#     dado_reduzido = dado[:novas_linhas * fator, :novas_colunas * fator].reshape((novas_linhas, fator, novas_colunas, fator)).mean(axis=(1, 3))
-#     return dado_reduzido
-
-# def redimensionarLote(arrays, fator=2): return [redimensionar(array, fator=fator) for array in arrays]
 
 def extrairProporcoes(dicionario=parametros['classes'], alvo=parametros['geral']['classeAlvo'], seraoIgnorados=None): 
     if seraoIgnorados is None: seraoIgnorados = []
