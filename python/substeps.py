@@ -7,16 +7,17 @@ import re
 import json
 
 def converterNetcdfParaArray(netcdf, zerarNan=True, semSolo=parametros['geral']['retirarSolo'], modo=parametros['geral']['modoRetirarSolo']):
-        sigma = obterBandaNetcdf(netcdf, 'Sigma0_VV_db')
-        sigmaSemSolo = retirarSolo(netcdf, modo=modo)
-        sigmaSemMar = inverterNan(sigma, sigmaSemSolo)
-        if semSolo: sigma = sigmaSemSolo
-        if zerarNan: sigma = np.nan_to_num(sigma, nan=0)
-        return sigma, sigmaSemSolo , sigmaSemMar
+    sigma = obterBandaNetcdf(netcdf, 'Sigma0_VV_db')
+    borda = sigma != sigma
+    sigmaSemSolo = retirarSolo(netcdf, modo=modo)
+    sigmaSemMar = inverterNan(sigma, sigmaSemSolo)
+    if semSolo: sigma = sigmaSemSolo
+    if zerarNan: sigma = np.nan_to_num(sigma, nan=0)
+    return sigma, sigmaSemSolo , sigmaSemMar, borda
 
-def converterJsonParaArray(jsonFile, sigmaSemSolo, sigmaSemMar, aprimorarRotulos=parametros['geral']['aprimorarRotulo']):
+def converterJsonParaArray(jsonFile, sigmaSemSolo, sigmaSemMar, borda, aprimorarRotulos=parametros['geral']['aprimorarRotulo']):
     dadosJSON = json.load(open(jsonFile)) #Lendo cada arquivo JSON e convertendo em um dicionário.
-    rotulo = np.full(sigmaSemSolo.shape, parametros['classes']['null']['valor'], dtype=np.int32)
+    rotulo = np.full(sigmaSemSolo.shape, parametros['classes']['null']['valor'], dtype=np.int32) + borda.astype(np.int32) * parametros['classes']['edge']['valor']
     if aprimorarRotulos:
         apenasAgua = (sigmaSemSolo == sigmaSemSolo) * parametros['classes']['ocean']['valor']
         apenasSolo = (sigmaSemMar == sigmaSemMar) * parametros['classes']['land']['valor']

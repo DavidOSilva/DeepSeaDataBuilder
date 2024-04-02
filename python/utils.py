@@ -3,6 +3,7 @@ from IPython.display import clear_output
 import matplotlib.pyplot as plt
 from matplotlib.colors import ListedColormap
 import numpy as np
+import random
 import time
 
 from parametros import *
@@ -126,4 +127,10 @@ def extrairProporcoes(dicionario=parametros['classes'], alvo=parametros['geral']
         if classe[0] not in seraoIgnorados: proporcoes.append(classe[1]['proporcao'])
     proporcoes.insert(0, dicionario[alvo]['proporcao']) #O alvo sempre aparece primeiro.
     return proporcoes
+
+def carregarNpzArrays(npz, arrays=['dado', 'rotulo']):
+    with np.load(npz) as npzFile: loaded_arrays = [npzFile[array] for array in arrays]
+    return loaded_arrays
+
+
         

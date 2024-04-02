@@ -3,8 +3,11 @@ from python.filesManager import *
 from parametros import * 
 
 for tamanho in parametros['geral']['tamanhos']:
-    hdf5Fatiados = recortarEmFatias(tamanho=tamanho)
+    npzConvertidos = converterEmNpz()
+    hdf5Fatiados = recortarEmFatias(tamanho, npzConvertidos)
     hdf5Filtrados = separarFatiasPorClasses(hdf5Fatiados, tamanho)
-    hdf5Filtrados, classesAumentadas = aumentoDeDadosHDF5(hdf5Filtrados, tamanho)
-    datasetHDF5 = criarConjuntoDeDados(hdf5Filtrados, tamanho, classesAumentadas)
+    hdf5Embaralhados = embaralharFiltrados(hdf5Filtrados, tamanho)
+    hdf5Aumentado, classesAumentadas = aumentoDeDadosHDF5(hdf5Embaralhados, tamanho)
+    datasetHDF5 = criarConjuntoDeDados(hdf5Aumentado, tamanho, classesAumentadas)
     deletarPastas([parametros['diretorios']['temporarios']])
+    break

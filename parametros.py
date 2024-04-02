@@ -12,6 +12,7 @@ parametros = {
     'diretorios': {
         'netcdfs':       r"/mnt/camobi_2/david/NETCDFs/",            #Dados.
         'jsons':         r"/mnt/camobi_2/david/JSONs/",              #Rotulos.
+        'npzs':          r"/mnt/camobi_2/david/NPZs/",               #Dados e rotulos já convertidos em arrays.
         'temporarios':   r"/mnt/camobi_2/david/TEMPs/",            
         'dataset':       r"/mnt/camobi_2/david/DATASETs/",
         'grafos':        r"/home/los/david/Graphs/",
@@ -19,9 +20,10 @@ parametros = {
     },
      
     'geral': {
-        'tamanhos':          [64],                 #Refere-se aos tamanhos de cada pacote durante o recorte. (Para cada tamanho um conj. de dados é gerado).
+        'tamanhos':          [64, 128, 256, 512, 1024, 2048],  #Refere-se aos tamanhos de cada pacote durante o recorte. (Para cada tamanho um conj. de dados é gerado).
         'limiar':            0.1,                  #Refere-se ao percentual mínimo de pixels que uma fatia deve aparesentar para ser considerado alvo.
         'probabilidade':     1.0,                  #Refere-se a probabilidade de realizar o aumento dos dados para cada uma das rotações e espelhamentos.
+        'converter':         False,                #Se verdadeiro, força a conversão de todos os arquivos netcdfs e jsons.
         'retirarSolo':       False,                #Se verdadeiro, o código retira os pixels de solo do NetCDF antes de fatiar.
         'aprimorarRotulo':   False,                #Se verdadeiro, mapeia todo oceano e terreno nos rotulos considerando os pixels de solo do netcdf.
         'retirarExcessos':   True,                 #Se verdadeiro, a imagem será cortada na região de interesse, onde estão os poligonos.
@@ -40,15 +42,16 @@ parametros = {
     },
 
     'classes': { #A ordem em que as classes aparecem nesse arquivo define a prioridade na outra de filtrar.
-        'oil':          {'valor': 1, 'cor': '#7A6352', 'proporcao': 0.60, 'indicadores': ['oil', 'oilspill']},
-        'ship':         {'valor': 3, 'cor': '#E2E2E2', 'proporcao': 0.05, 'indicadores': ['ship', 'boat']},
-        'wind':         {'valor': 2, 'cor': '#FF643F', 'proporcao': 0.10, 'indicadores': ['wind', 'lowwind']},
-        'lookalike':    {'valor': 4, 'cor': '#CEA24A', 'proporcao': 0.10, 'indicadores': ['lookalike', 'darkocean']},
-        'ocean':        {'valor': 5, 'cor': '#66CCFF', 'proporcao': 0.10, 'indicadores': ['ocean', 'sea', 'water']},
-        'land':         {'valor': 6, 'cor': '#FFFF99', 'proporcao': 0.05, 'indicadores': ['ground', 'land', 'darkland']},
+        'oil':          {'valor': 1, 'cor': '#7A6352', 'proporcao': 0.50, 'indicadores': ['oil', 'oilspill']},
+        'ship':         {'valor': 3, 'cor': '#E2E2E2', 'proporcao': 0.07, 'indicadores': ['ship', 'boat']},
+        'lookalike':    {'valor': 4, 'cor': '#CEA24A', 'proporcao': 0.17, 'indicadores': ['lookalike', 'darkocean']},
+        'wind':         {'valor': 2, 'cor': '#FF643F', 'proporcao': 0.12, 'indicadores': ['wind', 'lowwind']},
+        'ocean':        {'valor': 5, 'cor': '#66CCFF', 'proporcao': 0.08, 'indicadores': ['ocean', 'sea', 'water']},
+        'land':         {'valor': 6, 'cor': '#FFFF99', 'proporcao': 0.03, 'indicadores': ['ground', 'land', 'darkland', 'solo']},
         'biofilm':      {'valor': 7, 'cor': '#05FF58', 'proporcao': 0.00, 'indicadores': ['biofilm', 'phyto', 'phytoplancton', 'chlorophyll']},
         'rain':         {'valor': 8, 'cor': '#0066FF', 'proporcao': 0.00, 'indicadores': ['rain', 'rainfall']},
-        'null':         {'valor': 0, 'cor': '#FF00FF', 'proporcao': 0.00, 'indicadores': []},
+        'edge':         {'valor': 9, 'cor': '#78206E', 'proporcao': 0.03, 'indicadores': ['edge', 'nan']},
+        'null':         {'valor': 0, 'cor': '#FF66FF', 'proporcao': 0.00, 'indicadores': []},
     },
 
     # O VALOR é responsável por associar a cada classe um valor discreto. Lembre-se sempre de habilitar a conversão se o alterar os valores das classes.

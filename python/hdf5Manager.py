@@ -13,12 +13,8 @@ def criarHDF5Vazio(hdf5File, tamanho, grupos=['principal'], datasets=['dado', 'r
             grupo = f.create_group(gp)  # Cria um grupo com o nome especificado
             for ds in datasets:
                 if isinstance(tamanho, int): tamanho = [tamanho]
-                if nvlComp is None:
-                    grupo.create_dataset(ds,shape=(0, tamanho[0], tamanho[-1]), maxshape=(None, tamanho[0], tamanho[-1]),
-                                         compression=compressao)
-                else:
-                    grupo.create_dataset(ds,shape=(0, tamanho[0], tamanho[-1]), maxshape=(None, tamanho[0], tamanho[-1]),
-                                         compression=compressao, compression_opts=nvlComp)
+                if nvlComp is None: grupo.create_dataset(ds,shape=(0, tamanho[0], tamanho[-1]), maxshape=(None, tamanho[0], tamanho[-1]), compression=compressao)
+                else: grupo.create_dataset(ds,shape=(0, tamanho[0], tamanho[-1]), maxshape=(None, tamanho[0], tamanho[-1]), compression=compressao, compression_opts=nvlComp)
     return hdf5File
 
 def carregarHDF5(hdf5File, indices=None, grupo='principal', datasets=['dado', 'rotulo']):
@@ -52,3 +48,12 @@ def lenHDF5(hdf5File, dataset='dado', grupo='principal'):
         data = gp[dataset]
         qnt = len(data)
     return qnt
+
+def sobrescreverHDF5(hdf5File, dadosNovos, grupo='principal', datasets=['dado', 'rotulo']):
+    with h5py.File(hdf5File, 'a') as f:
+        gp = f[grupo]  # Acessa o grupo com o nome especificado
+        for dadoNovo, ds in zip(dadosNovos, datasets):
+            dados = gp[ds]
+            tamanhoDadosNovos, tamanhoDadosAntigos = len(dadoNovo), dados.shape[0]
+            if tamanhoDadosNovos > tamanhoDadosAntigos: dados.resize((tamanhoDadosNovos, *dados.shape[1:]))
+            dados[:tamanhoDadosNovos] = dadoNovo  # Sobrescreve os dados existentes

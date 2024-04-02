@@ -2,30 +2,41 @@ from python.substeps import *
 from parametros import *
 from os import listdir, getcwd
 from os.path import join, isdir, exists
+from pathlib import Path
+import datetime
 
-def recortarEmFatias(tamanho, dirNetcdf=parametros['diretorios']['netcdfs'], dirJson=parametros['diretorios']['jsons'],
-                     dirHDF5=parametros['diretorios']['temporarios'], valoresVazios=['null', 'ocean'],
-                     detalhes=parametros['visualizar']['exibirQuantidadeFatias']):
+def converterEmNpz(dirNpz=Path(parametros['diretorios']['npzs']), dirNetcdf=Path(parametros['diretorios']['netcdfs']),
+                    dirJson=Path(parametros['diretorios']['jsons']), forcarConversao=parametros['geral']['converter']):
     if not verificaEquivalenciaEntreDiretorios(dirNetcdf, dirJson):
         printColorido('TODOS OS NETCDFS DEVEM POSSUIR UM JSON ASSOCIADO E VICE-VERSA!', 'r')
         return None
-    if not parametros['geral']['aprimorarRotulo']: valoresVazios=['null'] #Assim os poligonos de oceano feitos a mão são mantidos.
+    if parametros['geral']['modoRetirarSolo'] == 'snap': printColorido('VAMOS UTILIZAR O SNAP PARA PROCESSAR CADA NETCDF, ISSO PODE LEVAR UM TEMPINHO...                                      ','b', '\r')
+    dirPasta, jsons = criarPasta(dirNpz/f"{parametros['geral']['modoRetirarSolo'].upper()}"), sorted(list(dirJson.glob('*.json')))
+    for i, stem in enumerate(map(lambda json: json.stem, jsons)): #Itera sobre cada um dos stems considerando os jsons.
+        #Se o arquivo já foi convertido(stem.h5 existe) mas o netcdf (stem.nc) é mais antigo que o arquivo convertido (stem.h5), então não convertemos.
+        if (dirPasta/f'{stem}.npz').exists() and not (dirNetcdf/f'{stem}.nc').stat().st_mtime > (dirPasta/f'{stem}.npz').stat().st_mtime and not forcarConversao: continue 
+        else:
+            sigma, sigmaSemSolo, sigmaSemMar, borda = converterNetcdfParaArray(dirNetcdf/f'{stem}.nc')
+            rotulo = converterJsonParaArray(dirJson/f'{stem}.json', sigmaSemSolo, sigmaSemMar, borda)
+            np.savez_compressed(dirPasta/f'{stem}.npz', dado=sigma, rotulo=rotulo)
+            imprimaBarraProgresso(i+1, len(jsons), etapa='CONVERSÃO PARA NPZ')
+    return dirPasta
+
+def recortarEmFatias(tamanho, npzConvertidos, dirHDF5=parametros['diretorios']['temporarios'], valoresVazios=['null'], detalhes=parametros['visualizar']['exibirQuantidadeFatias']):
+    if parametros['geral']['aprimorarRotulo']: valoresVazios=['null', 'ocean'] #Com os rotulos aprimorados teremos muitos pixels de ocean.
     dirFatiados = criarPasta(join(dirHDF5, 'FATIADOS'))
     hdf5File = criarHDF5Vazio(join(dirFatiados, f'[{tamanho}].h5'), tamanho=tamanho)
-    if parametros['geral']['modoRetirarSolo'] == 'snap':
-        printColorido('VAMOS UTILIZAR O SNAP PARA PROCESSAR CADA NETCDF, ISSO PODE LEVAR UM TEMPINHO...                                      ','b', '\r')
-    for indice, arquivoSemFormato in enumerate(sorted(removerFormatoLista(manterElementosComFinalDesejado(listdir(dirNetcdf), '.nc')))):
-        sigma, sigmaSemSolo, sigmaSemMar = converterNetcdfParaArray(join(dirNetcdf, arquivoSemFormato + '.nc'))
-        rotulo = converterJsonParaArray(join(dirJson, arquivoSemFormato + '.json'), sigmaSemSolo, sigmaSemMar)
+    npzs = sorted(npzConvertidos.glob('*.npz'))
+    for indice, npz in enumerate(npzs):
+        sigma, rotulo = carregarNpzArrays(npzConvertidos/f'{npz}')
         if parametros['geral']['retirarExcessos']: sigma, rotulo = retirarExcessos(sigma, rotulo, valoresVazios=valoresVazios)
         dadosFatiados, rotulosFatiados = fatiarComDiferentesPtsIniciais(sigma, rotulo, tamanho=tamanho, ptsIniciais=[0]) #[0, tamanho//2]
         incrementarHDF5(hdf5File, dadosNovos=[dadosFatiados, rotulosFatiados]) # Adiciona os dados fatiados ao arquivo HDF5
-        if not parametros['visualizar']['plotarSemExcessos']: imprimaBarraProgresso(indice+1, len(listdir(dirNetcdf)), etapa='RECORTE EM FATIAS')
+        if not parametros['visualizar']['plotarSemExcessos']: imprimaBarraProgresso(indice+1, len(npzs), etapa='RECORTE EM FATIAS')
     if detalhes: printColorido(f"QUANTIDADE TOTAL DE FATIAS OBTIDAS: {lenHDF5(hdf5File, dataset='dado')}                                        ",'g','\r') 
     return hdf5File
 
-def separarFatiasPorClasses(hdf5Fatiados, tamanho, dirHDF5=parametros['diretorios']['temporarios'],
-                            alvo=parametros['geral']['classeAlvo'], classes=obterClassesParametros()):
+def separarFatiasPorClasses(hdf5Fatiados, tamanho, dirHDF5=parametros['diretorios']['temporarios'], alvo=parametros['geral']['classeAlvo'], classes=obterClassesParametros()):
     tamanhoLote, comprimento = aproximarLote(tamanho), lenHDF5(hdf5Fatiados, dataset='dado')
     qntdLotes, fim = obterQuantidadeDeLotes(comprimento, tamanhoLote), tamanhoLote
     dirFiltrados = criarPasta(join(dirHDF5, 'FILTRADOS'))
@@ -45,11 +56,26 @@ def separarFatiasPorClasses(hdf5Fatiados, tamanho, dirHDF5=parametros['diretorio
             for classe in classes: mensagem += f'{classe.upper()}: {lenHDF5(hdf5Filtrados, grupo=classe)}   '
             mensagem += f'LOTE: {i+1}/{qntdLotes}'
             printColorido(mensagem,'b', '\r')      
-    return hdf5Filtrados  
+    return hdf5Filtrados
+
+def embaralharFiltrados(hdf5, tamanho):
+    tamanhoLote, classes = aproximarLote(tamanho), obterClassesParametros(seraoIgnorados=['null'])
+    for classeIdx, classe in enumerate(classes):
+        qntdLotes = obterQuantidadeDeLotes(comprimento=lenHDF5(hdf5, grupo=classe), tamanhoLote=tamanhoLote)
+        if qntdLotes == 0: continue
+        for i in range(qntdLotes):
+            inicioLote, fimLote = i*(tamanhoLote//2), i*(tamanhoLote//2) + tamanhoLote
+            dados, rotulos = carregarHDF5(hdf5, indices=[inicioLote, fimLote], grupo=classe)
+            indices = list(range(len(dados)))
+            random.shuffle(indices)
+            dadosEmbaralhados, rotulosEmbaralhados = [dados[i] for i in indices], [rotulos[i] for i in indices]
+            sobrescreverHDF5(hdf5, dadosNovos=[dadosEmbaralhados, rotulosEmbaralhados], grupo=classe)
+        imprimaBarraProgresso(classeIdx+1, len(classes), etapa='EMBARALHAMENTO DAS CLASSES')
+    return hdf5
 
 def aumentoDeDadosHDF5(hdf5Filtrados, tamanho, probabilidade=parametros['geral']['probabilidade']):
     tamanhoLote = aproximarLote(tamanho)
-    fim, sufixo, classesAumentadas = tamanhoLote, '', encontrarClassesAumentadas(hdf5Filtrados, alvo=parametros['geral']['classeAlvo'])
+    sufixo, classesAumentadas = '', encontrarClassesAumentadas(hdf5Filtrados, alvo=parametros['geral']['classeAlvo'])
     for i, classeAumentada in enumerate(classesAumentadas):
         qntdLotes = obterQuantidadeDeLotes(comprimento=lenHDF5(hdf5Filtrados, grupo=classeAumentada), tamanhoLote=tamanhoLote)
         for i in range(qntdLotes):
@@ -62,42 +88,6 @@ def aumentoDeDadosHDF5(hdf5Filtrados, tamanho, probabilidade=parametros['geral']
         imprimaBarraProgresso(i, len(classesAumentadas), etapa='AUMENTO DO CONJUNTO DE DADOS')
     hdf5Filtrados = renomearArquivo(hdf5Filtrados, novoNome=obterBasename(hdf5Filtrados) + sufixo + '.h5')
     return hdf5Filtrados, classesAumentadas
-
-# def criarConjuntoDeDados(hdf5Filtrados, tamanho, dirDataset=parametros['diretorios']['dataset']):
-#     classes, qntFatias = obterClassesParametros(), obterQntFatiasFiltradasHDF5(hdf5Filtrados, seraoIgnorados=['land', 'null'])
-#     datasetPasta = criarPasta(join(dirDataset, f'{tamanho}'))
-#     tamanhoLote = aproximarLote(tamanho)
-#     if parametros['geral']['redimensionar'] and tamanho > parametros['geral']['limiteResolucao']:
-#         datasetHDF5 = criarHDF5Vazio(join(datasetPasta, f'[EM ANDAMENTO...][{tamanho}].h5'), parametros['geral']['limiteResolucao']) 
-#     else: datasetHDF5 = criarHDF5Vazio(join(datasetPasta, f'[EM ANDAMENTO...][{tamanho}].h5'), tamanho)
-        
-#     totalAdicionado, qntFatiasIncluidas = 0, []
-#     for classeIndex, classe in enumerate(classes):
-#         qntdLotes, foramIncluidas = obterQuantidadeDeLotes(comprimento=qntFatias[classeIndex], tamanhoLote=tamanhoLote), 0
-        
-#         for loteIndex in range(qntdLotes):
-#             faltaAdicionar = qntFatias[0]*2 - totalAdicionado
-#             inicioLote = loteIndex*tamanhoLote
-#             fimLote =  min(inicioLote + tamanhoLote, inicioLote + faltaAdicionar)
-#             dado, rotulo = carregarHDF5(hdf5Filtrados, indices=[inicioLote, fimLote], grupo=classe)
-#             if parametros['geral']['redimensionar'] and tamanho > parametros['geral']['limiteResolucao']:
-#                 fator = tamanho//parametros['geral']['limiteResolucao']
-#                 dado, rotulo = redimensionarLote(dado, fator=fator), redimensionarLote(rotulo, fator=fator)
-#             incrementarHDF5(datasetHDF5, dadosNovos=[dado, rotulo])
-#             totalAdicionado += len(dado)
-#             foramIncluidas += len(dado)
-#             imprimaBarraProgresso(totalAdicionado, qntFatias[0]*2, etapa='CONSTRUÇÃO DO CONJUNTO DE DADOS, ESTAMOS QUASE LÁ')
-#             if totalAdicionado == qntFatias[0]*2: break #Se o número de fatias já atingiu o dobro do numero de fatias do alvo, não incluimos mais.
-                
-#         qntFatiasIncluidas.append(foramIncluidas) #Captura número de fatias incluidas da classe que estamos iterando.
-#         if totalAdicionado == qntFatias[0]*2: break #Se o número de fatias já atingiu o dobro do numero de fatias do alvo, não incluimos mais. 
-            
-#     qntClassesNaoIncluidas = len(classes) - len(qntFatiasIncluidas)
-#     qntFatiasIncluidas.extend([0] * qntClassesNaoIncluidas) # Preenchendo com zeros para as classes que não foram incluídas
-#     datasetHDF5 = renomearArquivo(datasetHDF5, gerarNomePastaDestino(proporcoes=obterProporcoes(qntFatiasIncluidas), tamanho=tamanho) + '.h5')
-#     printColorido(f'CONJUNTO DE DADOS SALVO: {datasetHDF5}                                                                                ', 'g', '\r')
-#     return datasetHDF5
-
 
 def criarConjuntoDeDados(hdf5Filtrados, tamanho, classesAumentadas, dirDataset=parametros['diretorios']['dataset'], detalhar=parametros['visualizar']['detalharConstrucao']):
     classes, qntFatias, tamanhoLote, proporcoes = obterClassesParametros(), obterQntFatiasFiltradasHDF5(hdf5Filtrados), aproximarLote(tamanho), extrairProporcoes()
