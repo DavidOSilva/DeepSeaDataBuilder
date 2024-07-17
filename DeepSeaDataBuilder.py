@@ -10,4 +10,3 @@ for tamanho in parametros['geral']['tamanhos']:
     hdf5Aumentado, classesAumentadas = aumentoDeDadosHDF5(hdf5Embaralhados, tamanho)
     datasetHDF5 = criarConjuntoDeDados(hdf5Aumentado, tamanho, classesAumentadas)
     deletarPastas([parametros['diretorios']['temporarios']])
-    break
